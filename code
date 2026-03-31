@@ -1,0 +1,54 @@
+# Load data
+data = pd.read_csv("../data/routes.csv")
+
+# Features & target
+X = data.drop("travel_time_min", axis=1)
+y = data["travel_time_min"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Model
+model = RandomForestRegressor(n_estimators=100)
+model.fit(X_train, y_train)
+
+joblib.dump(model, "route_model.pkl")
+
+print("Model trained and saved!")
+import joblib
+import numpy as np
+
+#trained model
+model = joblib.load("../model/route_model.pkl")
+
+def predict_route(distance, traffic, time_of_day, weather):
+    input_data = np.array([[distance, traffic, time_of_day, weather]])
+    prediction = model.predict(input_data)
+    return round(prediction[0], 2)
+from app.predictor import predict_route
+
+def main():
+    print("🚗 Smart Route Predictor")
+
+    distance = float(input("Enter distance (km): "))
+    traffic = int(input("Traffic level (1-5): "))
+    time_of_day = int(input("Hour of day (0-23): "))
+    weather = int(input("Weather (0=Clear, 1=Rain, 2=Fog): "))
+
+    result = predict_route(distance, traffic, time_of_day, weather)
+
+    print(f"\n⏱️ Estimated Travel Time: {result} minutes")
+
+if _name_ == "_main_":
+    main()
+
+#Bonus Idea function to suggest the best route among multiple options:
+
+def best_route(routes):
+    best_time = float('inf')
+    best = None
+    
+    for route in routes:
+        time = predict_route(*route)
+        if time < best_time:
+            best_time = time
+            best = route
